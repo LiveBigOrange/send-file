@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>P2P文件传输 - 下载文件</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --background-color: #ffffff;
+            --card-background: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #e9ecef;
+            --status-background: rgba(255, 255, 255, 0.95);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #4285f4;
+                --background-color: #121212;
+                --card-background: #1e1e1e;
+                --text-color: #ffffff;
+                --border-color: #2d2d2d;
+                --status-background: rgba(30, 30, 30, 0.9);
+            }
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            background: var(--card-background);
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .input-container {
+            padding: 1.5rem;
+        }
+
+        #transferCode {
+            width: 100%;
+            height: 50px;
+            text-align: center;
+            letter-spacing: 8px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 0.75rem;
+            border: 2px dashed var(--primary-color);
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        #transferCode:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+            background-color: #fff;
+        }
+
+        #transferCode::placeholder {
+            letter-spacing: 2px;
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #0d6efd, #0a58ca);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+        }
+
+        .btn:disabled {
+            background: linear-gradient(45deg, #6c757d, #495057);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #fileList {
+            padding: 1.5rem;
+        }
+
+        #fileList h3 {
+            color: var(--text-color);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            transform: translateX(5px);
+            border-color: var(--primary-color);
+        }
+
+        .file-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-size {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #0d6efd, #0a58ca);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        #transferStatus {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            z-index: 1000;
+        }
+
+        .status-message {
+            background: var(--status-background);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .success-message {
+            border-color: #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .error-message {
+            border-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .warning-message {
+            border-color: #ffc107;
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+
+        .breadcrumb-nav {
+            padding: 1.5rem 1.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb-nav a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .breadcrumb-nav a:hover {
+            color: #0a58ca;
+        }
+
+        .breadcrumb-nav .separator {
+            color: #6c757d;
+            margin: 0 0.25rem;
+        }
+
+        .breadcrumb-nav .current {
+            color: #6c757d;
+        }
+
+        .download-dialog {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .dialog-backdrop {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .dialog-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
+        .dialog-content {
+            margin-bottom: 1.5rem;
+            color: #6c757d;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .dialog-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .dialog-btn-primary {
+            background: linear-gradient(45deg, #0d6efd, #0a58ca);
+            color: white;
+        }
+
+        .dialog-btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .input-container {
+                padding: 1rem;
+            }
+
+            #transferCode {
+                font-size: 1.25rem;
+                letter-spacing: 6px;
+            }
+
+            .btn {
+                padding: 0.75rem;
+            }
+
+            .file-item {
+                padding: 1rem;
+            }
+
+            .breadcrumb-nav {
+                padding: 1rem 1rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <nav class="breadcrumb-nav">
+                <a href="/">首页</a>
+                <span class="separator">/</span>
+                <span class="current">接收文件</span>
+            </nav>
+            <div class="input-container">
+                <input type="text"
+                       id="transferCode"
+                       placeholder="请输入6位提取码"
+                       maxlength="6"
+                       pattern="[A-Za-z0-9_-]{6}"
+                       inputmode="text"
+                       autocomplete="off"
+                       autocapitalize="characters">
+                <button class="btn" id="joinTransferBtn" disabled>加入传输</button>
+            </div>
+            <div id="fileList" style="display: none;">
+                <h3>待接收文件</h3>
+                <div class="file-list-container"></div>
+            </div>
+        </div>
+    </div>
+    <div id="transferStatus"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+    <script>
+        // WebSocket配置
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: 10,      // 增加重连次数
+            reconnectionDelay: 2000,       // 增加重连延迟
+            reconnectionDelayMax: 10000,   // 最大重连延迟
+            timeout: 60000,                // 增加超时时间到60秒
+            transports: ['websocket', 'polling'],
+            maxHttpBufferSize: 5e8         // 增加到500MB
+        });
+
+        // 文件传输状态管理
+        const TransferState = {
+            WAITING: 'waiting',
+            RECEIVING: 'receiving',
+            PAUSED: 'paused',
+            COMPLETED: 'completed',
+            ERROR: 'error'
+        };
+
+        let receivingFiles = {};
+        let currentTransferCode = '';
+        let isConnected = false;
+        let retryAttempts = new Map();
+        let reconnectionTimer = null;
+        let currentTransferState = TransferState.WAITING;
+        const MAX_RETRY_ATTEMPTS = 10;     // 增加最大重试次数
+        const RECONNECT_INTERVAL = 5000;
+        const CHUNK_TIMEOUT = 30000;       // 增加到30秒
+        const CHUNK_SIZE = 2 * 1024 * 1024; // 改为 2MB
+
+        const transferCodeInput = document.getElementById('transferCode');
+        const joinTransferBtn = document.getElementById('joinTransferBtn');
+
+        // 自动聚焦到输入框
+        window.addEventListener('load', () => {
+            transferCodeInput.focus();
+        });
+
+        // 改进的重连处理
+        function handleReconnection() {
+            if (reconnectionTimer) {
+                clearInterval(reconnectionTimer);
+            }
+
+            let attempts = 0;
+            const maxAttempts = 12; // 1分钟 (5秒 * 12)
+
+            showReconnectingStatus(attempts, maxAttempts);
+
+            reconnectionTimer = setInterval(() => {
+                attempts++;
+
+                if (attempts > maxAttempts) {
+                    clearInterval(reconnectionTimer);
+                    showErrorMessage('重连失败，请刷新页面重试');
+                    return;
+                }
+
+                showReconnectingStatus(attempts, maxAttempts);
+
+                if (!isConnected) {
+                    socket.connect();
+                } else {
+                    clearInterval(reconnectionTimer);
+                    if (currentTransferCode) {
+                        rejoinTransfer();
+                    }
+                }
+            }, RECONNECT_INTERVAL);
+        }
+
+        // 显示重连状态
+        function showReconnectingStatus(attempts, maxAttempts) {
+            const statusDiv = document.getElementById('transferStatus');
+            const timeLeft = Math.round((maxAttempts - attempts) * (RECONNECT_INTERVAL / 1000));
+
+            statusDiv.innerHTML = `
+                <div class="status-message warning-message">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-sync-alt fa-spin me-2"></i>
+                        <div>
+                            <div>发送方已断开连接，正在尝试重新连接...</div>
+                            <div class="small text-muted">
+                                第 ${attempts}/${maxAttempts} 次尝试 (${timeLeft}秒后超时)
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-warning ms-3" onclick="manualReconnect()">
+                            立即重试
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 手动重连
+        function manualReconnect() {
+            if (reconnectionTimer) {
+                clearInterval(reconnectionTimer);
+            }
+            socket.connect();
+            showWarningMessage('正在尝试重新连接...');
+        }
+
+        // 重新加入传输
+        function rejoinTransfer() {
+            console.log('尝试重新加入传输:', currentTransferCode);
+            socket.emit('rejoin_transfer', {
+                transfer_code: currentTransferCode,
+                received_chunks: Object.keys(receivingFiles).map(fileId => ({
+                    file_id: fileId,
+                    received_chunks: Array.from(receivingFiles[fileId].receivedChunks.keys())
+                }))
+            });
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            isConnected = true;
+            showSuccessMessage('已连接到服务器');
+
+            if (currentTransferCode) {
+                rejoinTransfer();
+            }
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            isConnected = false;
+            handleReconnection();
+        });
+
+        socket.on('sender_disconnected', () => {
+            console.log('Sender disconnected');
+            handleReconnection();
+        });
+
+        socket.on('transfer_resumed', (data) => {
+            console.log('Transfer resumed:', data);
+            showSuccessMessage('传输已恢复，继续接收文件...');
+
+            // 更新进度显示
+            Object.keys(receivingFiles).forEach(fileId => {
+                const file = receivingFiles[fileId];
+                if (file) {
+                    const progress = Math.round((file.receivedChunks.size / file.totalChunks) * 100);
+                    updateProgressUI(fileId, progress);
+                }
+            });
+        });
+
+        // 优化错误消息显示
+        function showErrorMessage(message) {
+            const statusDiv = document.getElementById('transferStatus');
+            statusDiv.innerHTML = `
+                <div class="status-message error-message">
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <div>
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            ${message}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-danger" onclick="manualReconnect()">
+                                <i class="fas fa-sync-alt me-1"></i>重新连接
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="window.location.reload()">
+                                <i class="fas fa-redo me-1"></i>刷新页面
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 优化警告消息显示
+        function showWarningMessage(message) {
+            const statusDiv = document.getElementById('transferStatus');
+            statusDiv.innerHTML = `
+                <div class="status-message warning-message">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${message}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 优化成功消息显示
+        function showSuccessMessage(message) {
+            const statusDiv = document.getElementById('transferStatus');
+            statusDiv.innerHTML = `
+                <div class="status-message success-message">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            // 5秒后自动隐藏成功消息
+            setTimeout(() => {
+                const currentMessage = statusDiv.querySelector('.success-message');
+                if (currentMessage) {
+                    currentMessage.style.opacity = '0';
+                    currentMessage.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => {
+                        if (statusDiv.contains(currentMessage)) {
+                            statusDiv.removeChild(currentMessage);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // 处理输入事件
+        transferCodeInput.addEventListener('input', (e) => {
+            let value = e.target.value.toUpperCase();
+            value = value.replace(/[^A-Z0-9_-]/g, '');
+            value = value.slice(0, 6);
+            e.target.value = value;
+            joinTransferBtn.disabled = value.length !== 6 || !isConnected;
+        });
+
+        // 处理粘贴事件
+        transferCodeInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const processed = pastedText.toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 6);
+            transferCodeInput.value = processed;
+            joinTransferBtn.disabled = processed.length !== 6 || !isConnected;
+        });
+
+        // 处理回车键
+        transferCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !joinTransferBtn.disabled) {
+                e.preventDefault();
+                joinTransferBtn.click();
+            }
+        });
+
+        // 点击按钮时加入传输
+        joinTransferBtn.addEventListener('click', () => {
+            const transferCode = transferCodeInput.value.trim().toUpperCase();
+            if (!transferCode || transferCode.length !== 6) {
+                showErrorMessage('请输入正确的6位提取码');
+                return;
+            }
+            if (!isConnected) {
+                showErrorMessage('正在连接服务器，请稍候...');
+                return;
+            }
+            joinTransfer(transferCode);
+        });
+
+        function joinTransfer(transferCode) {
+            currentTransferCode = transferCode;
+            clearTransferStatus();
+
+            showSuccessMessage('正在连接到发送方...');
+
+            socket.emit('join_transfer_room', {
+                transfer_code: transferCode
+            });
+
+            // 设置超时检查
+            setTimeout(() => {
+                if (document.getElementById('fileList').style.display === 'none') {
+                    showErrorMessage('连接发送方超时，请检查提取码是否正确');
+                }
+            }, 10000);
+        }
+
+        function clearTransferStatus() {
+            const fileList = document.getElementById('fileList');
+            if (fileList) {
+                fileList.style.display = 'none';
+                const container = fileList.querySelector('.file-list-container');
+                if (container) {
+                    container.innerHTML = '';
+                }
+            }
+
+            document.getElementById('transferStatus').innerHTML = '';
+            receivingFiles = {};
+            currentTransferCode = '';
+        }
+
+        socket.on('receiver_joined', (data) => {
+            if (data.status === 'success') {
+                showSuccessMessage('已成功连接到发送方');
+            }
+        });
+
+        // 调试函数
+        function debugLog(message, data = null) {
+            const timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] ${message}`);
+            if (data) {
+                console.log(data);
+            }
+        }
+
+        // 改进的文件接收初始化
+        socket.on('file_transfer_ready', (fileInfo) => {
+            console.log('准备接收文件:', fileInfo);
+            document.getElementById('fileList').style.display = 'block';
+
+            const fileListContainer = document.querySelector('.file-list-container');
+            fileListContainer.innerHTML = '';
+
+            // 创建文件项
+            const fileElement = createFileElement(fileInfo);
+            fileListContainer.appendChild(fileElement);
+
+            // 初始化文件接收状态
+            receivingFiles[fileInfo.id] = {
+                ...fileInfo,
+                receivedChunks: new Map(),
+                progress: 0,
+                completed: false,
+                state: TransferState.WAITING,
+                totalChunks: Math.ceil(fileInfo.size / CHUNK_SIZE), // 使用新的块大小
+                lastChunkTime: Date.now(),
+                retryCount: 0,
+                lastReceivedChunk: -1
+            };
+
+            // 请求开始传输
+            requestFileTransfer(fileInfo.id);
+        });
+
+        function createFileElement(fileInfo) {
+            const fileElement = document.createElement('div');
+            fileElement.className = 'file-item';
+            fileElement.innerHTML = `
+                <div class="file-info">
+                    <div class="file-name">
+                        <i class="fas fa-file me-2"></i>${fileInfo.name}
+                    </div>
+                    <div class="file-size">${formatFileSize(fileInfo.size)}</div>
+                </div>
+                <div class="transfer-status" id="status-${fileInfo.id}">准备接收...</div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="progress-${fileInfo.id}" style="width: 0%">
+                            <span class="progress-text">0%</span>
+                        </div>
+                    </div>
+                    <div class="transfer-controls" id="controls-${fileInfo.id}">
+                        <button class="btn btn-sm btn-primary retry-btn" style="display: none" onclick="retryFileTransfer('${fileInfo.id}')">
+                            <i class="fas fa-sync-alt me-1"></i>重试
+                        </button>
+                    </div>
+                </div>
+            `;
+            return fileElement;
+        }
+
+        // 请求文件传输
+        function requestFileTransfer(fileId) {
+            const file = receivingFiles[fileId];
+            if (!file) return;
+
+            file.state = TransferState.RECEIVING;
+            file.lastChunkTime = Date.now();
+            updateFileStatus(fileId, '开始接收文件...');
+
+            // 请求未接收的块
+            const receivedChunks = Array.from(file.receivedChunks.keys());
+            socket.emit('request_file_transfer', {
+                transfer_code: currentTransferCode,
+                file_id: fileId,
+                received_chunks: receivedChunks
+            });
+
+            // 设置超时检查
+            startChunkTimeoutCheck(fileId);
+        }
+
+        // 检查块接收超时
+        function startChunkTimeoutCheck(fileId) {
+            const checkInterval = setInterval(() => {
+                const file = receivingFiles[fileId];
+                if (!file || file.state !== TransferState.RECEIVING) {
+                    clearInterval(checkInterval);
+                    return;
+                }
+
+                const now = Date.now();
+                if (now - file.lastChunkTime > CHUNK_TIMEOUT) {
+                    handleChunkTimeout(fileId);
+                }
+            }, 1000);
+        }
+
+        // 处理块接收超时
+        function handleChunkTimeout(fileId) {
+            const file = receivingFiles[fileId];
+            if (!file) return;
+
+            file.state = TransferState.ERROR;
+            updateFileStatus(fileId, '接收超时，请重试');
+            showRetryButton(fileId);
+        }
+
+        // 更新文件状态显示
+        function updateFileStatus(fileId, status) {
+            const statusElement = document.getElementById(`status-${fileId}`);
+            if (statusElement) {
+                statusElement.textContent = status;
+            }
+        }
+
+        // 显示重试按钮
+        function showRetryButton(fileId) {
+            const controlsElement = document.getElementById(`controls-${fileId}`);
+            if (controlsElement) {
+                const retryBtn = controlsElement.querySelector('.retry-btn');
+                if (retryBtn) {
+                    retryBtn.style.display = 'inline-block';
+                }
+            }
+        }
+
+        // 改进的重试文件传输函数
+        function retryFileTransfer(fileId) {
+            const file = receivingFiles[fileId];
+            if (!file) return;
+
+            if (file.retryCount >= MAX_RETRY_ATTEMPTS) {
+                updateFileStatus(fileId, '重试次数过多，请刷新页面重新开始');
+                return;
+            }
+
+            file.retryCount++;
+            file.state = TransferState.WAITING;
+
+            // 获取未接收的块列表
+            const missingChunks = [];
+            for (let i = 0; i < file.totalChunks; i++) {
+                if (!file.receivedChunks.has(i)) {
+                    missingChunks.push(i);
+                }
+            }
+
+            updateFileStatus(fileId, `正在重试 (第${file.retryCount}次) - 剩余${missingChunks.length}块...`);
+
+            // 隐藏重试按钮
+            const controlsElement = document.getElementById(`controls-${fileId}`);
+            if (controlsElement) {
+                const retryBtn = controlsElement.querySelector('.retry-btn');
+                if (retryBtn) {
+                    retryBtn.style.display = 'none';
+                }
+            }
+
+            // 重新请求传输未接收的块
+            socket.emit('request_file_transfer', {
+                transfer_code: currentTransferCode,
+                file_id: fileId,
+                received_chunks: Array.from(file.receivedChunks.keys()),
+                missing_chunks: missingChunks
+            });
+
+            // 重置超时检查
+            file.lastChunkTime = Date.now();
+            file.state = TransferState.RECEIVING;
+            startChunkTimeoutCheck(fileId);
+        }
+
+        // 优化的文件块处理
+        socket.on('file_chunk', (data) => {
+            const { file_id, chunk_index, chunk_data, total_chunks } = data;
+            const file = receivingFiles[file_id];
+
+            if (!file) {
+                console.error('未知文件ID:', file_id);
+                return;
+            }
+
+            try {
+                // 更新最后接收时间
+                file.lastChunkTime = Date.now();
+
+                // 验证块数据
+                if (!chunk_data || chunk_data.byteLength === 0) {
+                    throw new Error('接收到空数据块');
+                }
+
+                // 存储数据块
+                const chunk = new Uint8Array(chunk_data);
+                file.receivedChunks.set(chunk_index, chunk);
+                file.lastReceivedChunk = chunk_index;
+
+                // 更新进度
+                const progress = Math.round((file.receivedChunks.size / total_chunks) * 100);
+                updateProgress(file_id, progress);
+
+                // 更新状态
+                updateFileStatus(file_id, `已接收 ${progress}% (${formatFileSize(chunk_data.byteLength * file.receivedChunks.size)}/${formatFileSize(file.size)})`);
+
+                // 确认接收
+                socket.emit('chunk_received', {
+                    transfer_code: currentTransferCode,
+                    file_id: file_id,
+                    chunk_index: chunk_index,
+                    received_size: chunk_data.byteLength * file.receivedChunks.size
+                });
+
+                // 检查是否完成
+                if (file.receivedChunks.size === total_chunks) {
+                    file.state = TransferState.COMPLETED;
+                    assembleAndDownloadFile(file_id);
+                }
+
+            } catch (error) {
+                console.error('处理数据块错误:', error);
+                handleChunkError(file_id, chunk_index, error);
+            }
+        });
+
+        // 优化的进度更新
+        function updateProgress(fileId, progress) {
+            const progressBar = document.getElementById(`progress-${fileId}`);
+            if (progressBar) {
+                progressBar.style.width = `${progress}%`;
+                const progressText = progressBar.querySelector('.progress-text');
+                if (progressText) {
+                    progressText.textContent = `${progress}%`;
+                }
+            }
+        }
+
+        // 优化的错误处理
+        function handleChunkError(fileId, chunkIndex, error) {
+            const file = receivingFiles[fileId];
+            if (!file) return;
+
+            file.state = TransferState.ERROR;
+            updateFileStatus(fileId, `接收错误: ${error.message}`);
+            showRetryButton(fileId);
+        }
+
+        // 优化的文件组装
+        async function assembleAndDownloadFile(fileId) {
+            const file = receivingFiles[fileId];
+            if (!file) return;
+
+            try {
+                updateFileStatus(fileId, '正在处理文件...');
+
+                // 验证所有块
+                const sortedChunks = Array.from(file.receivedChunks.entries())
+                    .sort(([a], [b]) => a - b)
+                    .map(([_, chunk]) => chunk);
+
+                if (sortedChunks.length !== file.totalChunks) {
+                    throw new Error('文件不完整');
+                }
+
+                // 创建Blob
+                const blob = new Blob(sortedChunks, { type: file.type || 'application/octet-stream' });
+                if (blob.size === 0) {
+                    throw new Error('文件大小为0');
+                }
+
+                // 触发下载
+                const url = URL.createObjectURL(blob);
+                triggerDownload(url, file.name);
+
+                // 更新状态
+                updateFileStatus(fileId, '文件已处理完成');
+                file.state = TransferState.COMPLETED;
+
+                // 清理内存（延迟清理以确保下载开始）
+                setTimeout(() => {
+                    file.receivedChunks.clear();
+                }, 3000);
+
+            } catch (error) {
+                console.error('文件处理错误:', error);
+                file.state = TransferState.ERROR;
+                updateFileStatus(fileId, `处理失败: ${error.message}`);
+                showRetryButton(fileId);
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // 显示移动设备下载链接
+        function showMobileDownloadLink(downloadUrl, fileName) {
+            const downloadDiv = document.createElement('div');
+            downloadDiv.style.position = 'fixed';
+            downloadDiv.style.top = '0';
+            downloadDiv.style.left = '0';
+            downloadDiv.style.width = '100%';
+            downloadDiv.style.height = '100%';
+            downloadDiv.style.backgroundColor = 'rgba(0,0,0,0.9)';
+            downloadDiv.style.color = 'white';
+            downloadDiv.style.zIndex = '10000';
+            downloadDiv.style.padding = '20px';
+            downloadDiv.style.boxSizing = 'border-box';
+            downloadDiv.style.display = 'flex';
+            downloadDiv.style.flexDirection = 'column';
+            downloadDiv.style.alignItems = 'center';
+            downloadDiv.style.justifyContent = 'center';
+
+            downloadDiv.innerHTML = `
+                <div style="text-align: center; max-width: 90%;">
+                    <h3 style="margin-bottom: 20px;">文件已准备好下载</h3>
+                    <p style="margin-bottom: 20px;">点击下方按钮下载文件：</p>
+                    <a href="${downloadUrl}" class="btn btn-primary" style="display: inline-block; padding: 12px 20px; background: #0d6efd; color: white; text-decoration: none; border-radius: 8px; margin-bottom: 20px;">
+                        下载 ${fileName}
+                    </a>
+                    <p style="margin-bottom: 10px; font-size: 0.9em;">此下载链接将在30分钟后失效</p>
+                    <button id="close-download-popup" style="width:100%; padding:10px; background:none; border:1px solid #555; color:#ddd; border-radius:8px; cursor:pointer;">
+                        关闭
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(downloadDiv);
+
+            // 添加关闭按钮事件
+            document.getElementById('close-download-popup').onclick = function() {
+                document.body.removeChild(downloadDiv);
+            };
+        }
+
+        function triggerDownload(url, fileName) {
+            try {
+                // 检测是否为安卓设备
+                const isAndroid = /Android/i.test(navigator.userAgent);
+
+                if (isAndroid) {
+                    // 针对安卓设备的特殊处理
+                    const downloadDiv = document.createElement('div');
+                    downloadDiv.id = 'android-download-panel';
+                    downloadDiv.style.position = 'fixed';
+                    downloadDiv.style.top = '0';
+                    downloadDiv.style.left = '0';
+                    downloadDiv.style.width = '100%';
+                    downloadDiv.style.height = '100%';
+                    downloadDiv.style.backgroundColor = 'rgba(0,0,0,0.9)';
+                    downloadDiv.style.color = 'white';
+                    downloadDiv.style.zIndex = '10000';
+                    downloadDiv.style.padding = '20px';
+                    downloadDiv.style.boxSizing = 'border-box';
+                    downloadDiv.style.display = 'flex';
+                    downloadDiv.style.flexDirection = 'column';
+                    downloadDiv.style.alignItems = 'center';
+                    downloadDiv.style.justifyContent = 'center';
+
+                    downloadDiv.innerHTML = `
+                        <div style="width:90%; max-width:400px; background:#222; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.5);">
+                            <h3 style="margin-bottom:15px; color:#fff; text-align:center;">文件已准备就绪</h3>
+                            <p style="margin-bottom:15px; color:#ddd; text-align:center;">选择一种下载方式：</p>
+
+                            <a id="new-window-link" style="display:block; padding:12px 20px; background:#0d6efd; color:white; text-decoration:none; border-radius:8px; text-align:center; margin-bottom:10px; font-weight:bold;">
+                                方式1: 在新窗口打开
+                            </a>
+
+                            <button id="try-direct-download" style="width:100%; display:block; padding:12px 20px; background:#28a745; color:white; border:none; border-radius:8px; text-align:center; margin-bottom:10px; font-weight:bold; cursor:pointer;">
+                                方式2: 尝试直接下载
+                            </button>
+
+                            <button id="save-as-image" style="width:100%; display:block; padding:12px 20px; background:#6c757d; color:white; border:none; border-radius:8px; text-align:center; margin-bottom:15px; font-weight:bold; cursor:pointer;">
+                                方式3: 尝试另存为图片(非图片文件无效)
+                            </button>
+
+                            <button id="close-android-popup" style="width:100%; padding:10px; background:none; border:1px solid #555; color:#ddd; border-radius:8px; cursor:pointer;">
+                                关闭
+                            </button>
+                        </div>
+                    `;
+
+                    document.body.appendChild(downloadDiv);
+
+                    // 方式1：在新窗口打开
+                    document.getElementById('new-window-link').onclick = function() {
+                        window.open(url, '_blank');
+                    };
+
+                    // 方式2：尝试直接下载
+                    document.getElementById('try-direct-download').onclick = function() {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileName;
+                        a.target = '_blank';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    };
+
+                    // 方式3：尝试另存为图片
+                    document.getElementById('save-as-image').onclick = function() {
+                        // 创建一个模拟长按保存的图片链接
+                        window.location.href = url;
+                    };
+
+                    // 关闭按钮
+                    document.getElementById('close-android-popup').onclick = function() {
+                        document.body.removeChild(downloadDiv);
+                    };
+                } else if (isMobileDevice()) {
+                    // 其他移动设备（如iOS）使用原来的方法
+                    const downloadDiv = document.createElement('div');
+                    downloadDiv.id = 'mobile-download-panel';
+                    downloadDiv.style.position = 'fixed';
+                    downloadDiv.style.top = '0';
+                    downloadDiv.style.left = '0';
+                    downloadDiv.style.width = '100%';
+                    downloadDiv.style.height = '100%';
+                    downloadDiv.style.backgroundColor = 'rgba(0,0,0,0.9)';
+                    downloadDiv.style.color = 'white';
+                    downloadDiv.style.zIndex = '10000';
+                    downloadDiv.style.padding = '20px';
+                    downloadDiv.style.boxSizing = 'border-box';
+                    downloadDiv.style.display = 'flex';
+                    downloadDiv.style.flexDirection = 'column';
+                    downloadDiv.style.alignItems = 'center';
+                    downloadDiv.style.justifyContent = 'center';
+
+                    // 针对不同设备提供相应的指导
+                    let instructions = '';
+                    if (isAndroid) {
+                        instructions = `
+                            <div style="margin-bottom:20px; text-align:left; max-width:90%;">
+                                <h4 style="color:#fff; margin-bottom:15px;">安卓设备下载步骤：</h4>
+                                <ol style="padding-left:20px; line-height:1.5;">
+                                    <li>点击下面的"下载文件"按钮</li>
+                                    <li>在弹出的菜单中选择"下载"或"保存"</li>
+                                    <li>如果浏览器询问权限，请允许</li>
+                                    <li>文件将保存到您的"下载"文件夹</li>
+                                </ol>
+                            </div>
+                        `;
+                    } else if (isIOS) {
+                        instructions = `
+                            <div style="margin-bottom:20px; text-align:left; max-width:90%;">
+                                <h4 style="color:#fff; margin-bottom:15px;">iOS设备下载步骤：</h4>
+                                <ol style="padding-left:20px; line-height:1.5;">
+                                    <li>点击下面的"下载文件"按钮</li>
+                                    <li>在Safari中，轻触右上角的"分享"图标</li>
+                                    <li>向下滚动并选择"保存到文件"</li>
+                                    <li>选择保存位置后点击"保存"</li>
+                                </ol>
+                            </div>
+                        `;
+                    }
+
+                    downloadDiv.innerHTML = `
+                        <div style="width:90%; max-width:400px; background:#222; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.5);">
+                            <h3 style="margin-bottom:15px; color:#fff; text-align:center;">文件已准备好下载</h3>
+                            ${instructions}
+                            <div style="text-align:center; margin-bottom:15px;">
+                                <div style="font-size:16px; color:#ccc; margin-bottom:8px;">文件信息</div>
+                                <div style="font-size:14px; color:#999; margin-bottom:4px;">名称：${fileName}</div>
+                            </div>
+                            <a href="${url}" download="${fileName}" id="direct-download-link" style="display:block; padding:12px 20px; background:#0d6efd; color:white; text-decoration:none; border-radius:8px; text-align:center; margin-bottom:15px; font-weight:bold;">
+                                下载文件
+                            </a>
+                            <button id="try-alt-download" style="width:100%; display:block; padding:12px 20px; background:#6c757d; color:white; border:none; border-radius:8px; text-align:center; margin-bottom:15px; font-weight:bold; cursor:pointer;">
+                                尝试其他下载方式
+                            </button>
+                            <button id="close-download-popup" style="width:100%; padding:10px; background:none; border:1px solid #555; color:#ddd; border-radius:8px; cursor:pointer;">
+                                关闭
+                            </button>
+                        </div>
+                    `;
+
+                    document.body.appendChild(downloadDiv);
+
+                    // 添加直接下载链接点击事件跟踪
+                    document.getElementById('direct-download-link').onclick = function() {
+                        showSuccessMessage(`文件下载已开始，请查看下载文件夹`);
+                    };
+
+                    // 添加关闭按钮事件
+                    document.getElementById('close-download-popup').onclick = function() {
+                        document.body.removeChild(downloadDiv);
+                    };
+
+                    // 替代下载方式 - 尝试iframe和data URL方法
+                    document.getElementById('try-alt-download').onclick = function() {
+                        // 方法1：使用iframe
+                        try {
+                            const iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.src = url;
+                            document.body.appendChild(iframe);
+
+                            // 方法2：尝试使用新窗口打开
+                            window.open(url, '_blank');
+
+                            showSuccessMessage(`正在尝试备用下载方式，请允许弹出窗口`);
+                        } catch (e) {
+                            console.error('备用下载方式失败:', e);
+                        }
+                    };
+
+                    // 强制触发第一个下载链接（自动点击）
+                    setTimeout(() => {
+                        document.getElementById('direct-download-link').click();
+                    }, 500);
+
+                } else {
+                    // PC端：使用标准下载方式
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        showSuccessMessage(`文件 "${fileName}" 开始下载`);
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('触发下载失败:', error);
+                showErrorMessage(`触发下载失败: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
