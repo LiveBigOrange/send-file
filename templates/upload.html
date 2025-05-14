@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P文件传输 - 上传文件</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .progress {
+            height: 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .file-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .file-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .file-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        .transfer-code {
+            font-size: 2.5rem;
+            letter-spacing: 5px;
+            font-family: monospace;
+            font-weight: 600;
+            color: #0d6efd;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #0d6efd;
+        }
+        .container {
+            max-width: 1200px;
+            padding: 2rem 1rem;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .card-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+        .file-drop-zone {
+            border: 2px dashed #0d6efd;
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .file-drop-zone:hover, .file-drop-zone.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+            transform: translateY(-2px);
+        }
+        .file-drop-zone i {
+            font-size: 3rem;
+            color: #0d6efd;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+        .file-drop-zone:hover i {
+            transform: translateY(-5px);
+        }
+        .file-drop-zone p {
+            color: #6c757d;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        #selectFileBtn {
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 8px;
+        }
+        #createTransferBtn {
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #0d6efd, #0a58ca);
+            border: none;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+            transition: all 0.3s ease;
+        }
+        #createTransferBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+        }
+        .file-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        .file-item:hover {
+            transform: translateX(5px);
+            border-color: #0d6efd;
+        }
+        .file-item h6 {
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .file-size {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .alert {
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .card {
+                margin-bottom: 1rem;
+            }
+            .transfer-code {
+                font-size: 2rem;
+                letter-spacing: 3px;
+                padding: 0.75rem;
+            }
+            .file-drop-zone {
+                padding: 1.5rem 1rem;
+            }
+            .file-drop-zone i {
+                font-size: 2.5rem;
+            }
+            #createTransferBtn {
+                padding: 0.75rem;
+            }
+        }
+        .breadcrumb {
+            padding: 0.5rem 0;
+            margin-bottom: 2rem;
+        }
+        .breadcrumb-item a {
+            color: #0d6efd;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .breadcrumb-item a:hover {
+            color: #0a58ca;
+        }
+        .breadcrumb-item.active {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">首页</a></li>
+                <li class="breadcrumb-item active">上传文件</li>
+            </ol>
+        </nav>
+
+        <h2 class="mb-4">上传文件</h2>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">选择文件</h5>
+                        <div class="file-drop-zone" id="dropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p class="mb-2">拖放文件到这里或点击选择文件</p>
+                            <input type="file" class="form-control" id="fileInput" multiple style="display: none;">
+                            <button class="btn btn-outline-primary" id="selectFileBtn">
+                                <i class="fas fa-folder-open me-2"></i>选择文件
+                            </button>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" id="createTransferBtn">
+                            <i class="fas fa-share-alt me-2"></i>创建传输
+                        </button>
+
+                        <div id="transferInfo" class="mt-4" style="display: none;">
+                            <div class="alert alert-info">
+                                <h5>提取码</h5>
+                                <p class="display-4 text-center" id="transferCode"></p>
+                                <p class="text-muted text-center">请将此提取码分享给接收方</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6>已选择文件:</h6>
+                            <div id="fileList" class="file-list">
+                                <!-- 文件列表将在这里动态显示 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">传输状态</h5>
+                        <div id="transferStatus">
+                            <!-- 传输状态将在这里动态显示 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        let selectedFiles = [];
+        let currentTransferCode = null;
+
+        // 文件拖放处理
+        const dropZone = document.getElementById('dropZone');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const fileInput = document.getElementById('fileInput');
+
+        selectFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            if (!validateFiles(files)) {
+                return;
+            }
+            selectedFiles = files;
+            updateFileList();
+            document.getElementById('fileList').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 优化进度显示
+        function updateProgress(fileId, progress) {
+            const progressBar = document.querySelector(`#progress-${fileId}`);
+            if (progressBar) {
+                progressBar.style.width = `${progress}%`;
+                progressBar.setAttribute('aria-valuenow', progress);
+                progressBar.innerHTML = `
+                    <span class="progress-text">${progress}%</span>
+                `;
+            }
+        }
+
+        // 添加文件大小限制检查
+        function validateFiles(files) {
+            const maxSize = 2 * 1024 * 1024 * 1024; // 2GB
+            let totalSize = 0;
+
+            for (const file of files) {
+                totalSize += file.size;
+                if (file.size > maxSize) {
+                    alert(`文件 "${file.name}" 超过大小限制 (2GB)`);
+                    return false;
+                }
+            }
+
+            if (totalSize > maxSize * 2) {
+                alert('总文件大小超过限制 (4GB)');
+                return false;
+            }
+
+            return true;
+        }
+
+        document.getElementById('createTransferBtn').addEventListener('click', async () => {
+            if (selectedFiles.length === 0) {
+                alert('请先选择文件');
+                return;
+            }
+
+            const response = await fetch('/create_transfer', {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                currentTransferCode = data.transfer_code;
+                document.getElementById('transferCode').textContent = currentTransferCode;
+                document.getElementById('transferInfo').style.display = 'block';
+
+                // 初始化WebSocket连接
+                socket.emit('initialize_sender', {
+                    transfer_code: currentTransferCode
+                });
+            }
+        });
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-item';
+                fileDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-truncate" style="max-width: 300px;" title="${file.name}">
+                                <i class="fas fa-file me-2 text-primary"></i>${file.name}
+                            </h6>
+                            <span class="file-size">
+                                <i class="fas fa-hdd me-1"></i>${formatFileSize(file.size)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"
+                             id="progress-${index}" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <span class="progress-text">0%</span>
+                        </div>
+                    </div>
+                `;
+                fileList.appendChild(fileDiv);
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('sender_initialized', (data) => {
+            if (data.status === 'success') {
+                console.log('发送方初始化完成');
+                document.getElementById('transferStatus').innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        <strong>等待接收方加入传输...</strong>
+                        <p class="mb-0 mt-2 text-muted small">请确保已将提取码分享给接收方</p>
+                    </div>
+                `;
+            }
+        });
+
+        socket.on('receiver_joined', (data) => {
+            if (data.status === 'success') {
+                console.log('接收方已加入，开始传输');
+                document.getElementById('transferStatus').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>接收方已连接</strong>
+                        <p class="mb-0 mt-2">文件传输已开始，请保持页面打开...</p>
+                    </div>
+                `;
+                startFileTransfer();
+            }
+        });
+
+        function startFileTransfer() {
+            selectedFiles.forEach((file, index) => {
+                const fileInfo = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    id: `file-${index}`
+                };
+
+                socket.emit('start_file_transfer', {
+                    transfer_code: currentTransferCode,
+                    file_info: fileInfo
+                });
+
+                // 开始分片传输
+                const chunkSize = 2 * 1024 * 1024; // 改为 2MB
+                const totalChunks = Math.ceil(file.size / chunkSize);
+                let currentChunk = 0;
+
+                function readAndSendChunk() {
+                    const start = currentChunk * chunkSize;
+                    const end = Math.min(start + chunkSize, file.size);
+                    const chunk = file.slice(start, end);
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        socket.emit('file_chunk', {
+                            transfer_code: currentTransferCode,
+                            file_id: fileInfo.id,
+                            chunk_index: currentChunk,
+                            total_chunks: totalChunks,
+                            chunk_data: e.target.result
+                        });
+
+                        // 更新进度条
+                        const progress = Math.round((currentChunk + 1) / totalChunks * 100);
+                        const progressBar = document.querySelector(`#progress-${index}`);
+                        if (progressBar) {
+                            progressBar.style.width = `${progress}%`;
+                            progressBar.setAttribute('aria-valuenow', progress);
+                            progressBar.textContent = `${progress}%`;
+                        }
+
+                        currentChunk++;
+                        if (currentChunk < totalChunks) {
+                            // 添加 50ms 延迟，减轻浏览器负担
+                            setTimeout(readAndSendChunk, 50);
+                        }
+                    };
+                    reader.readAsArrayBuffer(chunk);
+                }
+
+                readAndSendChunk();
+            });
+        }
+
+        socket.on('chunk_received', (data) => {
+            console.log(`Chunk ${data.chunk_index} received for file ${data.file_id}`);
+        });
+
+        socket.on('request_file_transfer', (data) => {
+            // data: { transfer_code, file_id, received_chunks, missing_chunks }
+            // 重新发送缺失的分片
+            const file = selectedFiles.find(f => f.id === data.file_id);
+            if (!file) return;
+
+            const chunkSize = 10 * 1024 * 1024;
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            let chunksToSend = [];
+
+            if (data.missing_chunks && data.missing_chunks.length > 0) {
+                chunksToSend = data.missing_chunks;
+            } else {
+                // 如果没有 missing_chunks，发送所有未收到的
+                for (let i = 0; i < totalChunks; i++) {
+                    if (!data.received_chunks.includes(i)) {
+                        chunksToSend.push(i);
+                    }
+                }
+            }
+
+            chunksToSend.forEach(chunkIndex => {
+                const start = chunkIndex * chunkSize;
+                const end = Math.min(start + chunkSize, file.size);
+                const chunk = file.slice(start, end);
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    socket.emit('file_chunk', {
+                        transfer_code: data.transfer_code,
+                        file_id: data.file_id,
+                        chunk_index: chunkIndex,
+                        total_chunks: totalChunks,
+                        chunk_data: e.target.result
+                    });
+                };
+                reader.readAsArrayBuffer(chunk);
+            });
+        });
+    </script>
+</body>
+</html>

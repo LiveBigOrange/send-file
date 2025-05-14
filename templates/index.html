@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P文件传输系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        .main-buttons {
+            margin-top: 50px;
+        }
+        .btn-main {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            margin: 10px;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-main i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        @media (max-width: 768px) {
+            .main-buttons {
+                margin-top: 30px;
+            }
+            .btn-main {
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+        .feature-item {
+            text-align: center;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .feature-item i {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #0d6efd;
+        }
+        /* 使用说明样式优化 */
+        .usage-section {
+            margin-top: 3rem;
+            padding: 0 10%;  /* Add padding to shift content right */
+        }
+
+        .usage-title {
+            text-align: left;  /* Align title to left */
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: 500;
+            padding-left: 15px;  /* Add some padding to align with content */
+        }
+
+        .usage-container {
+            display: flex;
+            gap: 30px;
+            justify-content: flex-start;  /* Align containers to start */
+        }
+
+        .usage-box {
+            flex: 0 1 400px;  /* Change flex basis */
+            padding: 20px;
+            background-color: #f8f9fa;  /* Add subtle background */
+            border-radius: 8px;  /* Add rounded corners */
+        }
+
+        .usage-box-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;  /* Slightly larger title */
+            font-weight: 500;
+            color: #333;
+        }
+
+        .usage-box-title i {
+            width: 28px;  /* Slightly larger icons */
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .usage-steps {
+            list-style: decimal;
+            padding-left: 1.5rem;
+            margin: 0;
+        }
+
+        .usage-steps li {
+            margin-bottom: 0.8rem;  /* Increase spacing between steps */
+            line-height: 1.6;
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .usage-section {
+                padding: 0 5%;  /* Reduce padding on mobile */
+            }
+
+            .usage-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .usage-box {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 text-center">
+                <h1 class="mt-5">P2P文件传输系统</h1>
+                <p class="lead">安全、快速的点对点文件传输解决方案</p>
+
+                <div class="main-buttons d-flex flex-column flex-md-row align-items-center justify-content-center">
+                    <a href="/upload" class="btn btn-primary btn-main">
+                        <i class="fas fa-upload"></i>
+                        发送文件
+                    </a>
+                    <a href="/download" class="btn btn-success btn-main">
+                        <i class="fas fa-download"></i>
+                        接收文件
+                    </a>
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <h3>功能特点</h3>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <i class="fas fa-mobile-alt"></i>
+                            <h5>全设备支持</h5>
+                            <p class="small">手机电脑均可使用</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <h5>安全传输</h5>
+                            <p class="small">点对点直接传输</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <i class="fas fa-file-alt"></i>
+                            <h5>多文件支持</h5>
+                            <p class="small">支持多文件传输</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <i class="fas fa-sync"></i>
+                            <h5>断点续传</h5>
+                            <p class="small">支持传输断点续传</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="usage-section">
+                    <h3 class="usage-title">使用说明</h3>
+                    <div class="usage-container">
+                        <div class="usage-box">
+                            <div class="usage-box-title">
+                                <i class="fas fa-upload text-primary"></i>
+                                发送文件
+                            </div>
+                            <ol class="usage-steps">
+                                <li>点击页面上方的"发送文件"按钮</li>
+                                <li>在打开的页面中选择需要传输的文件</li>
+                                <li>系统会自动生成一个6位数字的提取码</li>
+                                <li>将生成的提取码发送给文件接收方</li>
+                                <li>等待接收方完成接收即可</li>
+                            </ol>
+                        </div>
+                        <div class="usage-box">
+                            <div class="usage-box-title">
+                                <i class="fas fa-download text-success"></i>
+                                接收文件
+                            </div>
+                            <ol class="usage-steps">
+                                <li>点击页面上方的"接收文件"按钮</li>
+                                <li>在打开的页面中输入发送方提供的6位提取码</li>
+                                <li>点击"开始接收"按钮</li>
+                                <li>等待文件传输完成</li>
+                                <li>文件会自动下载到您的设备中</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-5 mb-4">
+        <div class="container text-center">
+            <p class="text-muted">注意：请确保发送方和接收方在同一网络环境下使用</p>
+        </div>
+    </footer>
+</body>
+</html>
